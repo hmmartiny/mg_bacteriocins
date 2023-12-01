@@ -1,0 +1,49 @@
+import json
+import os
+import subprocess
+
+configfile: "profile/config.yaml"
+
+with open("input.json", 'r') as f:
+      data = json.load(f)
+
+single, paired = [], []
+for k, v in data.items():
+	if v['library_layout'] == 'PAIRED':
+		paired.append(k)
+	elif v['library_layout'] == 'SINGLE':
+		single.append(k)
+
+include: "rules/download.smk"
+include: "rules/trimming.smk"
+include: "rules/mapping.smk"
+include: "rules/cleanup.smk"
+
+ruleorder: cleanup_paired > diamond_summary_paired > diamond_bacteriocins_paired > fastq2fasta_paired > trim_paired_end_reads > download_paired_end > cleanup_single > diamond_summary_single > diamond_bacteriocins_single > fastq2fasta_single > trim_single_end_reads > download_single_end
+
+rule all:
+    input:
+        expand("results/raw_reads/paired_end/{paired_reads}/{paired_reads}_1.fastq.gz", paired_reads=paired),
+        expand("results/raw_reads/paired_end/{paired_reads}/{paired_reads}_2.fastq.gz", paired_reads=paired),
+        expand("results/raw_reads/paired_end/{paired_reads}/{paired_reads}_check_file_raw.txt", paired_reads=paired),
+        expand("results/raw_reads/single_end/{single_reads}/{single_reads}.fastq.gz", single_reads=single),
+        expand("results/raw_reads/single_end/{single_reads}/{single_reads}_check_file_raw.txt", single_reads=single),
+        expand("results/trimmed_reads/single_end/{single_reads}.trimmed.fastq", single_reads=single),
+        expand("results/trimmed_reads/single_end/{single_reads}_trimmed.txt", single_reads=single),
+        expand("results/trimmed_reads/paired_end/{paired_reads}_merged.trimmed.fastq", paired_reads=paired),
+        expand("results/trimmed_reads/paired_end/{paired_reads}_trimmed.txt", paired_reads=paired),
+        expand("results/trimmed_fasta/single_end/{single_reads}.trimmed.fasta", single_reads=single),
+        expand("results/trimmed_fasta/single_end/{single_reads}_check_file_fastq2fasta.txt", single_reads=single),
+        expand("results/trimmed_fasta/paired_end/{paired_reads}_merged.trimmed.fasta", paired_reads=paired),
+        expand("results/trimmed_fasta/paired_end/{paired_reads}_check_file_fastq2fasta.txt", paired_reads=paired),
+        expand("results/diamond_bacteriocins/paired_end/{paired_reads}.tsv", paired_reads=paired),
+        expand("results/diamond_bacteriocins/paired_end/{paired_reads}_check_file_diamond.txt", paired_reads=paired),
+        expand("results/diamond_bacteriocins/single_end/{single_reads}.tsv", single_reads=single),
+        expand("results/diamond_bacteriocins/single_end/{single_reads}_check_file_diamond.txt", single_reads=single),
+        expand("results/raw_reads/single_end/{single_reads}/{single_reads}_check_file_raw_cleaned.txt", single_reads=single),
+        expand("results/trimmed_reads/single_end/{single_reads}_check_file_trimmed_cleaned.txt", single_reads=single),
+        expand("results/trimmed_fasta/single_end/{single_reads}_check_file_fastq2fasta_cleaned.txt", single_reads=single),
+        expand("results/raw_reads/paired_end/{paired_reads}/{paired_reads}_check_file_raw_cleaned.txt", paired_reads=paired),
+        expand("results/trimmed_reads/paired_end/{paired_reads}_check_file_trimmed_cleaned.txt", paired_reads=paired),
+        expand("results/trimmed_fasta/paired_end/{paired_reads}_check_file_fastq2fasta_cleaned.txt", paired_reads=paired)
+

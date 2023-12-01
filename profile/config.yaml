@@ -1,0 +1,10 @@
+use-envmodules: False
+restart-times: 5
+jobs: 50
+keep-going: True
+rerun-incomplete: True
+set-resources:
+    trim_single_end_reads:
+        runtime: 180
+    trim_paired_end_reads:
+        runtime: 180
